@@ -19,6 +19,23 @@ app.get('/create', function(req, resp) {
   fs.createReadStream(__dirname + '/public/create.html').pipe(resp);
 });
 
+app.get('/delete/:id', function(req, resp) {
+  let id = req.params.id;
+
+  for(let i = 0; i < jsonFile.Films.length; i++){
+    if(id == jsonFile.Films[i].id){
+      jsonFile.Films[i] = null;
+    }
+    else if(jsonFile.Films[i].id > id){
+      jsonFile.Films[i].id = jsonFile.Films[i].id - 1;
+    }
+  }
+
+  fs.truncate('./updateTop250.json', 0, function() {
+    fs.writeFileSync('./updateTop250.json', JSON.stringify(jsonFile));
+  });
+});
+
 app.get('/update/:id/:position', function(req, resp) {
   let id = req.params.id;
   let position = req.params.position;
@@ -30,7 +47,7 @@ app.get('/update/:id/:position', function(req, resp) {
       fs.truncate('./updateTop250.json', 0, function() {
         fs.writeFileSync('./updateTop250.json', JSON.stringify(jsonFile));
       });
-      
+
       break;
     }
   }
