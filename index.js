@@ -71,30 +71,49 @@ app.get('/read/:id', function(req, resp) {
 
 app.post("/createFilm", urlencodedParser, function (req, resp) {
   let readJSON = fs.readFileSync('./top250.json');
-  let jsonFile = JSON.parse(readJSON);
+let jsonFile = JSON.parse(readJSON);
 
-  let flag = false;
+  fs.truncate('./newTop250.json', 0, function() {
 
-  for(let i = 0; i < jsonFile.Films.length; i++){
-    if(req.body.filmId == jsonFile.Films[i].id){
-      flag = true;
-      resp.writeHead(404, {'Content-Type': 'text.html; charset=utf-8'});
-      fs.createReadStream(__dirname + '/public/404.html').pipe(resp);
-    }
-  }
+      message = {};
+      temp = {};
+      count = 1;
 
-  if(!flag){
-    jsonFile.Films.push({id: req.body.filmId,
-                            title: req.body.filmTitle,
-                            rating: req.body.filmRating,
-                            year: req.body.filmYear,
-                            budget: req.body.filmBudget,
-                            gross: req.body.filmGross,
-                            poster: req.body.filmPoster,
-                            position: req.body.filmPosition});
+      for(let i = 0; i < jsonFile.Films.length; i++){
+        if(req.body.filmId == jsonFile.Films[i].id){
 
-    resp.send(jsonFile.Films.pop());
-  }
+          message.id = req.body.filmId;
+          message.title = req.body.filmTitle;
+          message.rating = req.body.filmRating;
+          message.year = req.body.filmYear;
+          message.budget = req.body.filmBudget;
+          message.gross = req.body.filmGross;
+          message.poster = req.body.filmPoster;
+          message.position = req.body.filmPosition;
+
+          jsonFile.Films[i].id = jsonFile.Films[i].id + 1;
+          temp = jsonFile.Films[i]
+
+          jsonFile.Films[i] = message;
+          fs.appendFileSync('./newTop250.json', JSON.stringify(jsonFile.Films[i]) + '\n');
+
+          resp.send(jsonFile.Films[i]);
+        }
+        else if (jsonFile.Films[i].id < req.body.filmId) {
+            fs.appendFileSync('./newTop250.json', JSON.stringify(jsonFile.Films[i]) + '\n');
+        }
+        else if (jsonFile.Films[i].id > req.body.filmId) {
+          //чтобы доб 1 раз
+          if(count == 1){
+            count--;
+            fs.appendFileSync('./newTop250.json', JSON.stringify(temp) + '\n');
+          }
+
+          jsonFile.Films[i].id = jsonFile.Films[i].id + 1;
+          fs.appendFileSync('./newTop250.json', JSON.stringify(jsonFile.Films[i]) + '\n');
+        }
+      }
+  });
 });
 
 function comparebyPosition(obj1, obj2){
